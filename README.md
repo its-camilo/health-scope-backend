@@ -321,7 +321,7 @@ El CORS está configurado en `config/middlewares.ts` para permitir peticiones ú
 
 El servicio de análisis utiliza la API de Google Gemini para procesar archivos médicos:
 
-1. **Modelo**: `gemini-1.5-flash`
+1. **Modelo**: `gemini-flash-latest`
 2. **Procesamiento**:
    - Imágenes: Convertidas a base64 e incluidas en la petición
    - PDFs: Ruta almacenada para procesamiento futuro
