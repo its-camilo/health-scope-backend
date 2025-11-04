@@ -1,0 +1,26 @@
+{
+  "kind": "collectionType",
+  "collectionName": "analysis_results",
+  "info": {
+    "singularName": "analysis-result",
+    "pluralName": "analysis-results",
+    "displayName": "Analysis Result",
+    "description": "Stores the latest health analysis result for each user"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "analysis_data": {
+      "type": "json",
+      "required": true
+    },
+    "user": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "analysis_result"
+    }
+  }
+}
