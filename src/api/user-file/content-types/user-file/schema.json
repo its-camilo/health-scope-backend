@@ -1,0 +1,37 @@
+{
+  "kind": "collectionType",
+  "collectionName": "user_files",
+  "info": {
+    "singularName": "user-file",
+    "pluralName": "user-files",
+    "displayName": "User File",
+    "description": "Stores medical files (photos and PDFs) uploaded by users"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "file_data": {
+      "type": "media",
+      "multiple": false,
+      "required": true,
+      "allowedTypes": ["images", "files"]
+    },
+    "file_name": {
+      "type": "string",
+      "required": true
+    },
+    "file_type": {
+      "type": "enumeration",
+      "enum": ["photo", "pdf"],
+      "required": true
+    },
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user",
+      "inversedBy": "user_files"
+    }
+  }
+}
