@@ -15,6 +15,45 @@ type PopulatedUploadFile = {
 export default factories.createCoreController(
   "api::analysis-result.analysis-result",
   ({ strapi }) => ({
+    async find(ctx) {
+      const user = ctx.state.user;
+
+      if (!user) {
+        return ctx.unauthorized("You must be authenticated");
+      }
+
+      console.log("=== ANALYSIS RESULT FIND DEBUG ===");
+      console.log("Authenticated user ID:", user.id);
+
+      // Filter to only get the current user's analysis results
+      const existingQuery =
+        (ctx.query as Record<string, unknown> | undefined) ?? {};
+      const currentFilters =
+        (typeof existingQuery["filters"] === "object" &&
+        existingQuery["filters"] !== null
+          ? (existingQuery["filters"] as Record<string, unknown>)
+          : {}) ?? {};
+
+      ctx.query = {
+        ...(existingQuery as Record<string, unknown>),
+        filters: {
+          ...(currentFilters as Record<string, unknown>),
+          user: {
+            id: user.id,
+          },
+        },
+      } as typeof ctx.query;
+
+      console.log("Modified query:", JSON.stringify(ctx.query, null, 2));
+
+      const { data, meta } = await super.find(ctx);
+
+      console.log("Found analysis results count:", data?.length || 0);
+      console.log("Response data:", JSON.stringify(data, null, 2));
+
+      return { data, meta };
+    },
+
     async run(ctx) {
       const user = ctx.state.user;
 
@@ -132,8 +171,11 @@ export default factories.createCoreController(
           );
         }
 
+        // Sanitize the output to match Strapi v5 REST API format
+        const sanitizedResult = await this.sanitizeOutput(result, ctx);
+
         return ctx.send({
-          data: result,
+          data: sanitizedResult,
           message: "Analysis completed successfully",
         });
       } catch (error) {
