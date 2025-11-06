@@ -13,7 +13,8 @@
     "strapi": "strapi",
     "upgrade": "npx @strapi/upgrade latest",
     "upgrade:dry": "npx @strapi/upgrade latest --dry",
-    "codespaces:start": "bash start-codespaces.sh",
+    "codespaces:start": "bash start-codespaces-production.sh",
+    "codespaces:dev": "bash start-codespaces.sh",
     "codespaces:check": "bash check-health.sh",
     "codespaces:setup": "bash .devcontainer/setup.sh",
     "codespaces:verify": "bash verify-codespaces.sh"
