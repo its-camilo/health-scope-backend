@@ -11,6 +11,10 @@ export default factories.createCoreController(
         return ctx.unauthorized("You must be authenticated");
       }
 
+      console.log("=== USER FILES FIND DEBUG ===");
+      console.log("Authenticated user ID:", user.id);
+      console.log("Original query:", JSON.stringify(ctx.query, null, 2));
+
       const existingQuery =
         (ctx.query as Record<string, unknown> | undefined) ?? {};
       const currentFilters =
@@ -36,7 +40,14 @@ export default factories.createCoreController(
         },
       } as typeof ctx.query;
 
+      console.log("Modified query:", JSON.stringify(ctx.query, null, 2));
+
       const { data, meta } = await super.find(ctx);
+
+      console.log("Found files count:", data?.length || 0);
+      console.log("Response data:", JSON.stringify(data, null, 2));
+      console.log("Response meta:", JSON.stringify(meta, null, 2));
+
       return { data, meta };
     },
 
