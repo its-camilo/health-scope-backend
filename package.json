@@ -12,7 +12,10 @@
     "start": "strapi start",
     "strapi": "strapi",
     "upgrade": "npx @strapi/upgrade latest",
-    "upgrade:dry": "npx @strapi/upgrade latest --dry"
+    "upgrade:dry": "npx @strapi/upgrade latest --dry",
+    "codespaces:start": "bash start-codespaces.sh",
+    "codespaces:check": "bash check-health.sh",
+    "codespaces:setup": "bash .devcontainer/setup.sh"
   },
   "dependencies": {
     "@strapi/plugin-cloud": "5.30.0",

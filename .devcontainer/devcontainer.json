@@ -1,10 +1,15 @@
 {
-  "name": "Health Scope Backend",
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+  "name": "Health Scope Backend - Strapi v5",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-18",
 
   "features": {
     "ghcr.io/devcontainers/features/node:1": {
       "version": "18"
+    },
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "installZsh": true,
+      "configureZshAsDefaultShell": true,
+      "installOhMyZsh": true
     }
   },
 
@@ -13,30 +18,38 @@
   "portsAttributes": {
     "1337": {
       "label": "Strapi Backend",
-      "onAutoForward": "notify"
+      "onAutoForward": "notify",
+      "visibility": "public"
     }
   },
 
-  "postCreateCommand": "npm install",
-
-  "postStartCommand": "npm run develop",
+  "postCreateCommand": "bash .devcontainer/setup.sh",
 
   "customizations": {
     "vscode": {
       "extensions": [
         "dbaeumer.vscode-eslint",
         "esbenp.prettier-vscode",
-        "ms-vscode.vscode-typescript-next"
+        "ms-vscode.vscode-typescript-next",
+        "ms-vscode.js-debug-nightly"
       ],
       "settings": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
-        "editor.formatOnSave": true
+        "editor.formatOnSave": true,
+        "terminal.integrated.defaultProfile.linux": "bash"
       }
+    },
+    "codespaces": {
+      "openFiles": [
+        "README.md",
+        "CODESPACES.md"
+      ]
     }
   },
 
   "remoteEnv": {
     "HOST": "0.0.0.0",
-    "PORT": "1337"
+    "PORT": "1337",
+    "NODE_ENV": "development"
   }
 }

@@ -2,6 +2,28 @@
 
 Esta guía te ayudará a ejecutar el backend de Health Scope en GitHub Codespaces.
 
+## ⚡ Inicio Rápido (3 Pasos)
+
+### 1️⃣ Crear Codespace
+- Ve al repositorio en GitHub
+- Click **Code** → **Codespaces** → **Create codespace**
+- Espera 1-2 minutos (configuración automática)
+
+### 2️⃣ Configurar API Key
+```bash
+code .env
+# Agrega tu GEMINI_API_KEY
+```
+
+### 3️⃣ Iniciar Servidor
+```bash
+npm run codespaces:start
+```
+
+**¡Listo!** 🎉 Tu backend está corriendo.
+
+---
+
 ## 📋 Requisitos Previos
 
 - Una cuenta de GitHub
@@ -10,7 +32,7 @@ Esta guía te ayudará a ejecutar el backend de Health Scope en GitHub Codespace
 
 ---
 
-## 🎯 Inicio Rápido
+## 🎯 Guía Detallada
 
 ### 1. Crear el Codespace
 
@@ -18,15 +40,17 @@ Esta guía te ayudará a ejecutar el backend de Health Scope en GitHub Codespace
 2. Click en **Code** → **Codespaces** → **Create codespace on [branch]**
 3. Espera a que el codespace se inicialice (1-2 minutos)
 
+**Lo que sucede automáticamente:**
+- ✅ Instala dependencias (`npm install`)
+- ✅ Crea archivo `.env` desde `.env.example`
+- ✅ Configura HOST=0.0.0.0
+- ✅ Configura puertos
+
 ### 2. Configurar Variables de Entorno
 
-El codespace se creará automáticamente, pero necesitas configurar las variables de entorno:
+**El archivo `.env` ya está creado automáticamente.** Solo necesitas editarlo:
 
 ```bash
-# 1. Copia el archivo de ejemplo
-cp .env.example .env
-
-# 2. Edita el archivo .env
 code .env
 ```
 
@@ -200,50 +224,111 @@ Por defecto, los puertos en Codespaces son privados. Para hacerlos accesibles:
 
 ## 🐛 Resolución de Problemas
 
-### El servidor no inicia
+### ❌ Error 404 al acceder al admin
 
+**Causa:** El servidor no está corriendo.
+
+**Solución:**
 ```bash
-# Verifica las dependencias
+# Verificar estado del servidor
+npm run codespaces:check
+
+# Si no está corriendo, iniciarlo
+npm run codespaces:start
+```
+
+### ❌ El servidor no inicia
+
+**Solución:**
+```bash
+# 1. Verifica las dependencias
 npm install
 
-# Limpia caché
-npm run build
-rm -rf .cache build
+# 2. Limpia caché y archivos temporales
+rm -rf .cache build .tmp
 
-# Reinicia
-npm run develop
+# 3. Reinicia
+npm run codespaces:start
 ```
 
-### Error de CORS
+### ❌ Error de CORS
 
+**Causa:** `FRONTEND_URL` no configurada correctamente.
+
+**Solución:**
 ```bash
-# 1. Verifica FRONTEND_URL en .env
-echo $FRONTEND_URL
+# 1. Edita .env
+code .env
 
-# 2. Asegúrate de que coincide con la URL del frontend
-# 3. Reinicia el servidor
+# 2. Actualiza FRONTEND_URL con la URL correcta
+FRONTEND_URL=https://tu-frontend-codespace-3000.app.github.dev
+
+# 3. Reinicia el servidor (Ctrl+C y luego)
+npm run codespaces:start
 ```
 
-### Puerto 1337 no disponible
+### ❌ Puerto 1337 no disponible
 
 ```bash
 # Verifica qué está usando el puerto
 lsof -i :1337
 
-# O usa otro puerto
-PORT=1338 npm run develop
+# Si hay un proceso, mátalo
+kill -9 $(lsof -ti:1337)
+
+# Reinicia el servidor
+npm run codespaces:start
 ```
 
-### Base de datos SQLite bloqueada
+### ❌ Puerto 1337 no accesible desde internet
+
+**Causa:** El puerto no es público.
+
+**Solución:**
+1. Ve a la pestaña **PORTS**
+2. Click derecho en `1337`
+3. **Port Visibility** → **Public**
+
+**Nota:** La configuración `.devcontainer/devcontainer.json` ya incluye `"visibility": "public"` pero a veces necesitas hacerlo manualmente.
+
+### ❌ Error: GEMINI_API_KEY not configured
+
+**Causa:** API Key no está configurada en `.env`
+
+**Solución:**
+```bash
+# Edita .env
+code .env
+
+# Agrega tu API key real
+GEMINI_API_KEY=tu-api-key-real-aqui
+```
+
+### ❌ Base de datos SQLite bloqueada
 
 ```bash
-# Detén el servidor
+# Detén el servidor (Ctrl+C)
+
 # Elimina el archivo de base de datos
 rm -rf .tmp/data.db
 
 # Reinicia (se creará una nueva DB)
-npm run develop
+npm run codespaces:start
 ```
+
+### 🔍 Verificar Estado General
+
+```bash
+# Usa el script de verificación
+npm run codespaces:check
+```
+
+Este script te dirá:
+- ✅ Si el proceso está corriendo
+- ✅ Si el puerto está escuchando
+- ✅ Si el servidor responde
+- ✅ Si es accesible desde internet
+- ✅ La URL pública del Codespace
 
 ---
 
@@ -251,24 +336,57 @@ npm run develop
 
 ### Desarrollo en Codespaces
 
-1. **Backend Codespace:**
-   - Clona el repositorio del backend
-   - Crea codespace
-   - Configura `.env` con tu API key
-   - Ejecuta `npm run develop`
-   - Copia la URL del puerto 1337
+**1. Backend Codespace:**
+```bash
+# Crear codespace (GitHub UI)
 
-2. **Frontend Codespace:**
-   - Clona el repositorio del frontend
-   - Crea codespace
-   - Configura la URL del backend (del paso 1)
-   - Ejecuta el frontend
-   - Copia la URL del puerto 3000
+# Esperar configuración automática (1-2 min)
 
-3. **Actualizar CORS:**
-   - Vuelve al backend
-   - Actualiza `FRONTEND_URL` en `.env` con la URL del frontend
-   - Reinicia el backend
+# Configurar API Key
+code .env
+# Agregar GEMINI_API_KEY
+
+# Iniciar servidor
+npm run codespaces:start
+
+# Copiar URL del PORTS tab (puerto 1337)
+```
+
+**2. Frontend Codespace (si tienes):**
+```bash
+# Crear codespace del frontend
+
+# Configurar URL del backend
+# Usar la URL del paso 1
+
+# Ejecutar frontend
+npm run dev  # o el comando que uses
+
+# Copiar URL del PORTS tab (puerto 3000 o el que uses)
+```
+
+**3. Actualizar CORS en el Backend:**
+```bash
+# Volver al backend
+
+# Editar .env
+code .env
+
+# Actualizar FRONTEND_URL con la URL del frontend
+FRONTEND_URL=https://tu-frontend-codespace-3000.app.github.dev
+
+# Reiniciar servidor (Ctrl+C y luego)
+npm run codespaces:start
+```
+
+**4. Actualizar backend-urls.config.js:**
+```javascript
+const ACTIVE_ENVIRONMENT = 'codespaces';
+
+codespaces: {
+  url: 'https://tu-backend-codespace-1337.app.github.dev'
+}
+```
 
 ---
 
