@@ -75,21 +75,73 @@ export default factories.createCoreController(
         return ctx.badRequest("Data must be an object, not an array");
       }
 
-      // Remove user from data if it was sent from frontend (we'll add it from auth)
-      if (data && data.user) {
-        delete data.user;
+      // Extract file from request
+      const files = ctx.request.files || {};
+      console.log("Files object keys:", Object.keys(files));
+
+      // Check for file - it might come as 'files.file_data' or 'file_data'
+      const fileKey = Object.keys(files).find(key =>
+        key === 'file_data' || key === 'files.file_data'
+      );
+
+      console.log("File key found:", fileKey);
+
+      if (!fileKey) {
+        console.error("No file found in request");
+        return ctx.badRequest("File is required");
       }
 
-      // Set the body data with authenticated user
-      ctx.request.body.data = {
-        ...(data || {}),
-        user: user.id,
-      };
+      const file = files[fileKey];
+      console.log("File to upload:", {
+        name: file.originalFilename,
+        size: file.size,
+        type: file.mimetype
+      });
 
-      console.log("Final ctx.request.body.data:", JSON.stringify(ctx.request.body.data, null, 2));
+      try {
+        // Upload file to Strapi media library
+        const uploadedFiles = await strapi.plugins.upload.services.upload.upload({
+          data: {
+            fileInfo: {
+              name: file.originalFilename,
+              caption: data?.file_name || file.originalFilename,
+            }
+          },
+          files: file,
+        });
 
-      const response = await super.create(ctx);
-      return response;
+        console.log("Uploaded files:", uploadedFiles);
+
+        if (!uploadedFiles || uploadedFiles.length === 0) {
+          console.error("File upload failed - no files returned");
+          return ctx.badRequest("File upload failed");
+        }
+
+        const uploadedFile = uploadedFiles[0];
+        console.log("Uploaded file ID:", uploadedFile.id);
+
+        // Create the user-file entity with the uploaded file
+        const entity = await strapi.entityService.create(
+          "api::user-file.user-file",
+          {
+            data: {
+              file_name: data?.file_name || file.originalFilename,
+              file_type: data?.file_type || 'photo',
+              user: user.id,
+              file_data: uploadedFile.id,
+            },
+            populate: ['file_data', 'user'],
+          }
+        );
+
+        console.log("Created entity:", entity);
+
+        // Return formatted response
+        return { data: entity };
+      } catch (error) {
+        console.error("Error creating user file:", error);
+        return ctx.badRequest(`Failed to create user file: ${error.message}`);
+      }
     },
 
     async delete(ctx) {
