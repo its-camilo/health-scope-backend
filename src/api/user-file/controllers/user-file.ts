@@ -134,10 +134,19 @@ export default factories.createCoreController(
           }
         );
 
-        console.log("Created entity:", entity);
+        console.log("Created entity:", JSON.stringify(entity, null, 2));
 
-        // Return formatted response
-        return { data: entity };
+        // Use Strapi's sanitization to format the response correctly
+        const sanitizedEntity = await strapi.contentAPI.sanitizeOutput(
+          entity,
+          strapi.getModel('api::user-file.user-file'),
+          { auth: ctx.state.auth }
+        );
+
+        console.log("Sanitized entity:", JSON.stringify(sanitizedEntity, null, 2));
+
+        // Return in standard Strapi format
+        return { data: sanitizedEntity };
       } catch (error) {
         console.error("Error creating user file:", error);
         return ctx.badRequest(`Failed to create user file: ${error.message}`);
