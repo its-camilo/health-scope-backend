@@ -19,8 +19,7 @@
     "user": {
       "type": "relation",
       "relation": "oneToOne",
-      "target": "plugin::users-permissions.user",
-      "inversedBy": "analysis_result"
+      "target": "plugin::users-permissions.user"
     }
   }
 }

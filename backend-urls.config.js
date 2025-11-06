@@ -10,7 +10,7 @@
 // ========================================
 // Cambia esta variable para seleccionar el entorno activo
 
-const ACTIVE_ENVIRONMENT = 'local'; // Opciones: 'local', 'codespaces', 'strapi-cloud'
+const ACTIVE_ENVIRONMENT = 'codespaces'; // Opciones: 'local', 'codespaces', 'strapi-cloud'
 
 // ========================================
 // URLs POR ENTORNO
@@ -27,7 +27,7 @@ const BACKEND_URLS = {
   codespaces: {
     // Reemplaza YOUR-CODESPACE-NAME con el nombre de tu codespace
     // url: 'https://YOUR-CODESPACE-NAME-1337.app.github.dev',
-    url: '', // Completar cuando tengas el codespace activo
+    url: 'https://improved-space-system-x4x479r5wgqh659p-1337.app.github.dev/', // Completar cuando tengas el codespace activo
     description: 'GitHub Codespaces (actualiza con tu URL de codespace)'
   },
 
