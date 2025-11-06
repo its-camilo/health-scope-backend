@@ -15,7 +15,8 @@
     "upgrade:dry": "npx @strapi/upgrade latest --dry",
     "codespaces:start": "bash start-codespaces.sh",
     "codespaces:check": "bash check-health.sh",
-    "codespaces:setup": "bash .devcontainer/setup.sh"
+    "codespaces:setup": "bash .devcontainer/setup.sh",
+    "codespaces:verify": "bash verify-codespaces.sh"
   },
   "dependencies": {
     "@strapi/plugin-cloud": "5.30.0",
