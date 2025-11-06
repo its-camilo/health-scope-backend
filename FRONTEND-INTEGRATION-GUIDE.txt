@@ -1,0 +1,268 @@
+================================================================================
+HEALTH SCOPE BACKEND - GUÍA DE INTEGRACIÓN PARA FRONTEND
+================================================================================
+
+📍 CONFIGURACIÓN DE URLs DEL BACKEND
+================================================================================
+
+El backend puede ejecutarse en 3 entornos diferentes. Usa los archivos de
+configuración para gestionar las URLs:
+
+--------------------------------------------------------------------------------
+ARCHIVO: backend-urls.config.js (JavaScript)
+--------------------------------------------------------------------------------
+
+const ACTIVE_ENVIRONMENT = 'local'; // ⬅️ CAMBIAR SEGÚN ENTORNO
+
+const BACKEND_URLS = {
+  // 1. DESARROLLO LOCAL
+  local: {
+    url: 'http://localhost:1337',
+    description: 'Servidor local de desarrollo'
+  },
+
+  // 2. GITHUB CODESPACES
+  codespaces: {
+    url: 'https://YOUR-CODESPACE-NAME-1337.app.github.dev', // ⬅️ ACTUALIZAR
+    // Ejemplo: 'https://automatic-space-adventure-x7v9-1337.app.github.dev'
+    description: 'GitHub Codespaces'
+  },
+
+  // 3. STRAPI CLOUD (Producción)
+  'strapi-cloud': {
+    url: 'https://your-project-name.strapiapp.com', // ⬅️ ACTUALIZAR
+    // Ejemplo: 'https://health-scope-backend.strapiapp.com'
+    description: 'Strapi Cloud (Producción)'
+  }
+};
+
+// EXPORTAR
+module.exports = {
+  BACKEND_URL: BACKEND_URLS[ACTIVE_ENVIRONMENT].url
+};
+
+--------------------------------------------------------------------------------
+ARCHIVO: backend-urls.config.json (JSON)
+--------------------------------------------------------------------------------
+
+{
+  "activeEnvironment": "local",  // ⬅️ CAMBIAR SEGÚN ENTORNO
+
+  "environments": {
+    "local": {
+      "url": "http://localhost:1337"
+    },
+
+    "codespaces": {
+      "url": ""  // ⬅️ ACTUALIZAR con tu URL de Codespace
+    },
+
+    "strapi-cloud": {
+      "url": ""  // ⬅️ ACTUALIZAR cuando despliegues
+    }
+  }
+}
+
+================================================================================
+🚀 CÓMO USAR EN TU FRONTEND
+================================================================================
+
+--------------------------------------------------------------------------------
+OPCIÓN 1: Importar desde JavaScript
+--------------------------------------------------------------------------------
+
+// En tu archivo de configuración de API (ej: src/config/api.js)
+const { BACKEND_URL } = require('./backend-urls.config');
+
+// Luego usar en tus peticiones:
+fetch(`${BACKEND_URL}/api/auth/local`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ identifier: email, password })
+});
+
+--------------------------------------------------------------------------------
+OPCIÓN 2: Leer desde JSON
+--------------------------------------------------------------------------------
+
+// En tu archivo de configuración (ej: src/config/api.js)
+const config = require('./backend-urls.config.json');
+const BACKEND_URL = config.environments[config.activeEnvironment].url;
+
+export default BACKEND_URL;
+
+--------------------------------------------------------------------------------
+OPCIÓN 3: Variable de Entorno (Recomendado para producción)
+--------------------------------------------------------------------------------
+
+// En tu .env del frontend:
+REACT_APP_API_URL=http://localhost:1337
+# o
+VITE_API_URL=http://localhost:1337
+# o
+NEXT_PUBLIC_API_URL=http://localhost:1337
+
+// En tu código:
+const API_URL = process.env.REACT_APP_API_URL; // React
+const API_URL = import.meta.env.VITE_API_URL; // Vite
+const API_URL = process.env.NEXT_PUBLIC_API_URL; // Next.js
+
+================================================================================
+📋 URLs POR ENTORNO
+================================================================================
+
+--------------------------------------------------------------------------------
+1. LOCAL (Desarrollo en tu máquina)
+--------------------------------------------------------------------------------
+Backend URL: http://localhost:1337
+Admin Panel: http://localhost:1337/admin
+
+Configuración:
+- ACTIVE_ENVIRONMENT = 'local'
+- No requiere configuración adicional
+
+--------------------------------------------------------------------------------
+2. GITHUB CODESPACES (Desarrollo en la nube)
+--------------------------------------------------------------------------------
+Backend URL: https://YOUR-CODESPACE-NAME-1337.app.github.dev
+Admin Panel: https://YOUR-CODESPACE-NAME-1337.app.github.dev/admin
+
+Cómo obtener la URL:
+1. Abre tu Codespace
+2. Ve a la pestaña "PORTS" en VS Code
+3. Busca el puerto 1337
+4. Copia la URL (estará en la columna "Forwarded Address")
+5. Actualiza backend-urls.config.js con esta URL
+
+Configuración:
+- ACTIVE_ENVIRONMENT = 'codespaces'
+- Actualiza la URL en backend-urls.config.js
+
+IMPORTANTE: Hacer el puerto público
+- Click derecho en puerto 1337
+- Port Visibility → Public
+
+--------------------------------------------------------------------------------
+3. STRAPI CLOUD (Producción)
+--------------------------------------------------------------------------------
+Backend URL: https://your-project-name.strapiapp.com
+Admin Panel: https://your-project-name.strapiapp.com/admin
+
+Cómo obtener la URL:
+1. Despliega tu backend en Strapi Cloud
+2. Copia la URL desde el dashboard
+3. Actualiza backend-urls.config.js con esta URL
+
+Configuración:
+- ACTIVE_ENVIRONMENT = 'strapi-cloud'
+- Actualiza la URL en backend-urls.config.js
+
+================================================================================
+🔄 CAMBIAR ENTRE ENTORNOS
+================================================================================
+
+Para cambiar el entorno activo:
+
+1. Abre: backend-urls.config.js
+2. Cambia la línea:
+   const ACTIVE_ENVIRONMENT = 'local'; // o 'codespaces' o 'strapi-cloud'
+3. Guarda el archivo
+4. Tu frontend automáticamente usará la URL del nuevo entorno
+
+O si usas JSON:
+
+1. Abre: backend-urls.config.json
+2. Cambia:
+   "activeEnvironment": "local" // o "codespaces" o "strapi-cloud"
+3. Guarda el archivo
+
+================================================================================
+📡 ENDPOINTS DE LA API
+================================================================================
+
+Todos los endpoints usan el prefijo: {BACKEND_URL}/api
+
+Autenticación:
+- POST /api/auth/local/register  → Registro
+- POST /api/auth/local           → Login
+- GET  /api/users/me             → Usuario actual
+
+Archivos Médicos:
+- GET    /api/user-files         → Listar archivos
+- POST   /api/user-files         → Subir archivo
+- DELETE /api/user-files/:id     → Eliminar archivo
+
+Análisis:
+- POST /api/analysis/run         → Ejecutar análisis
+- POST /api/analysis/reset       → Restablecer datos
+- GET  /api/analysis-results     → Obtener resultados
+
+================================================================================
+🔐 AUTENTICACIÓN
+================================================================================
+
+Todas las peticiones (excepto login/registro) requieren el header:
+
+Authorization: Bearer {jwt-token}
+
+Ejemplo completo:
+
+fetch(`${BACKEND_URL}/api/user-files`, {
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('jwt')}`,
+    'Content-Type': 'application/json'
+  }
+});
+
+================================================================================
+⚙️ CONFIGURACIÓN DE CORS
+================================================================================
+
+El backend ya está configurado para aceptar peticiones desde el frontend.
+
+Actualiza en el backend (.env):
+
+# Para desarrollo local:
+FRONTEND_URL=http://localhost:3000
+
+# Para Codespaces:
+FRONTEND_URL=https://YOUR-FRONTEND-CODESPACE-3000.app.github.dev
+
+# Para producción:
+FRONTEND_URL=https://your-app.vercel.app
+
+================================================================================
+📚 DOCUMENTACIÓN ADICIONAL
+================================================================================
+
+- README.md       → Documentación general del backend
+- CODESPACES.md   → Guía completa de GitHub Codespaces
+- DEPLOYMENT.md   → Guía de deployment para todos los entornos
+
+================================================================================
+✅ CHECKLIST DE INTEGRACIÓN
+================================================================================
+
+□ Copiar backend-urls.config.js a tu proyecto frontend
+□ Configurar ACTIVE_ENVIRONMENT según tu entorno actual
+□ Actualizar URLs de Codespaces y Strapi Cloud cuando estén disponibles
+□ Importar BACKEND_URL en tu código de API
+□ Agregar header Authorization con JWT en peticiones autenticadas
+□ Configurar FRONTEND_URL en el .env del backend
+□ Probar endpoints básicos (login, registro)
+□ Verificar CORS está funcionando correctamente
+
+================================================================================
+🆘 SOPORTE
+================================================================================
+
+Si tienes problemas:
+1. Verifica que ACTIVE_ENVIRONMENT esté configurado correctamente
+2. Verifica que las URLs estén actualizadas
+3. Revisa la consola del browser para errores de CORS
+4. Consulta CODESPACES.md para troubleshooting
+5. Verifica que el backend esté ejecutándose
+
+================================================================================
+FIN DE LA GUÍA
+================================================================================

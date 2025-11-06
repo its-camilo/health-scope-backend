@@ -1,0 +1,27 @@
+{
+  "_comment": "Configuración de URLs del Backend para diferentes entornos",
+  "_instructions": "1. Descomenta y completa las URLs según tu entorno. 2. Cambia 'activeEnvironment' para seleccionar el entorno activo.",
+
+  "activeEnvironment": "local",
+
+  "environments": {
+    "local": {
+      "url": "http://localhost:1337",
+      "description": "Servidor local de desarrollo"
+    },
+
+    "codespaces": {
+      "url": "",
+      "urlExample": "https://YOUR-CODESPACE-NAME-1337.app.github.dev",
+      "description": "GitHub Codespaces - Actualiza 'url' con tu URL de codespace",
+      "instructions": "Para obtener la URL: 1. Abre el codespace, 2. Ve a 'Ports', 3. Copia la URL del puerto 1337"
+    },
+
+    "strapi-cloud": {
+      "url": "",
+      "urlExample": "https://your-project-name.strapiapp.com",
+      "description": "Strapi Cloud (Producción) - Actualiza 'url' cuando despliegues",
+      "instructions": "Obtén esta URL desde tu dashboard de Strapi Cloud"
+    }
+  }
+}
