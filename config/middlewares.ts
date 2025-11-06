@@ -1,4 +1,6 @@
-export default [
+// Ruta del archivo: backend/config/middlewares.ts
+
+module.exports = [
   "strapi::logger",
   "strapi::errors",
   {
@@ -31,7 +33,16 @@ export default [
     name: "strapi::cors",
     config: {
       enabled: true,
-      origin: [process.env.FRONTEND_URL || "http://localhost:3000"],
+      // =================================================================
+      // ESTA ES LA CONFIGURACIÓN CORREGIDA Y ROBUSTA
+      // =================================================================
+      // Lee la variable FRONTEND_URL de tu .env.
+      // El .split(',') es una buena práctica que te permite añadir
+      // múltiples URLs en el futuro, separadas por comas.
+      origin: (process.env.FRONTEND_URL || "http://localhost:3000").split(','),
+      // =================================================================
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+      headers: ['Content-Type', 'Authorization'],
       credentials: true,
     },
   },
