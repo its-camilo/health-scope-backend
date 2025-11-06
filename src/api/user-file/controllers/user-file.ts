@@ -91,7 +91,16 @@ export default factories.createCoreController(
         return ctx.badRequest("File is required");
       }
 
-      const file = files[fileKey];
+      const fileOrFiles = files[fileKey];
+
+      // Ensure we have a single file, not an array
+      const file = Array.isArray(fileOrFiles) ? fileOrFiles[0] : fileOrFiles;
+
+      if (!file) {
+        console.error("No file found after extraction");
+        return ctx.badRequest("File is required");
+      }
+
       console.log("File to upload:", {
         name: file.originalFilename,
         size: file.size,
@@ -137,11 +146,7 @@ export default factories.createCoreController(
         console.log("Created entity:", JSON.stringify(entity, null, 2));
 
         // Use Strapi's sanitization to format the response correctly
-        const sanitizedEntity = await strapi.contentAPI.sanitizeOutput(
-          entity,
-          strapi.getModel('api::user-file.user-file'),
-          { auth: ctx.state.auth }
-        );
+        const sanitizedEntity = await this.sanitizeOutput(entity, ctx);
 
         console.log("Sanitized entity:", JSON.stringify(sanitizedEntity, null, 2));
 
