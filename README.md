@@ -48,32 +48,82 @@ El servidor estará disponible en `http://localhost:1337`
 
 En el primer inicio, accede a `http://localhost:1337/admin` y crea tu cuenta de administrador.
 
+## 🌍 Entornos de Deployment
+
+Este backend puede ejecutarse en múltiples entornos:
+
+### 🏠 Local (Actual)
+```
+http://localhost:1337
+```
+
+### ☁️ GitHub Codespaces
+```
+https://your-codespace-name-1337.app.github.dev
+```
+📘 **Guía completa:** [CODESPACES.md](./CODESPACES.md)
+
+### 🌩️ Strapi Cloud (Producción)
+```
+https://your-project-name.strapiapp.com
+```
+📘 **Guía de deployment:** [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+### Configuración de URLs
+
+Usa el archivo `backend-urls.config.js` o `backend-urls.config.json` para gestionar las URLs:
+
+```javascript
+// backend-urls.config.js
+const ACTIVE_ENVIRONMENT = 'local'; // Cambiar según entorno
+
+const BACKEND_URLS = {
+  local: {
+    url: 'http://localhost:1337',
+  },
+  codespaces: {
+    url: 'https://your-codespace-1337.app.github.dev',
+  },
+  'strapi-cloud': {
+    url: 'https://your-project.strapiapp.com',
+  }
+};
+```
+
 ## 📁 Estructura del Proyecto
 
 ```
 health-scope-backend/
+├── .devcontainer/
+│   └── devcontainer.json           # Configuración de GitHub Codespaces
 ├── config/
-│   ├── middlewares.ts         # Configuración de CORS
-│   ├── plugins.ts              # Configuración de users-permissions
+│   ├── middlewares.ts              # Configuración de CORS
+│   ├── plugins.ts                  # Configuración de users-permissions
 │   └── ...
 ├── src/
 │   ├── api/
-│   │   ├── user-file/          # API de archivos médicos
+│   │   ├── user-file/              # API de archivos médicos
 │   │   │   ├── content-types/
 │   │   │   ├── controllers/
 │   │   │   ├── services/
 │   │   │   └── routes/
-│   │   ├── analysis-result/    # API de resultados de análisis
+│   │   ├── analysis-result/        # API de resultados de análisis
 │   │   │   ├── content-types/
 │   │   │   ├── controllers/
 │   │   │   ├── services/
 │   │   │   └── routes/
-│   │   └── analysis/           # API personalizada de análisis
+│   │   └── analysis/               # API personalizada de análisis
 │   │       ├── controllers/
 │   │       ├── services/
 │   │       └── routes/
-│   └── index.ts                # Bootstrap y configuración de permisos
-├── .env                        # Variables de entorno
+│   └── index.ts                    # Bootstrap y configuración de permisos
+├── .env                            # Variables de entorno
+├── .env.example                    # Plantilla de variables de entorno
+├── backend-urls.config.js          # Configuración de URLs (JavaScript)
+├── backend-urls.config.json        # Configuración de URLs (JSON)
+├── CODESPACES.md                   # Guía para GitHub Codespaces
+├── DEPLOYMENT.md                   # Guía de deployment
+├── README.md                       # Este archivo
 └── package.json
 ```
 
