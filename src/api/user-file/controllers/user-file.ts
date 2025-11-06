@@ -31,13 +31,8 @@ export default factories.createCoreController(
             id: user.id,
           },
         },
-        populate: {
-          ...(typeof existingQuery["populate"] === "object" &&
-          existingQuery["populate"] !== null
-            ? (existingQuery["populate"] as Record<string, unknown>)
-            : {}),
-          file_data: true,
-        },
+        // Force populate for file_data - don't merge with existing populate
+        populate: ['file_data'],
       } as typeof ctx.query;
 
       console.log("Modified query:", JSON.stringify(ctx.query, null, 2));
