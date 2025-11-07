@@ -55,13 +55,17 @@ export default factories.createCoreService(
         const prompt = `Eres un asistente médico especializado en análisis de salud. Analiza los siguientes archivos médicos (imágenes y/o PDFs) y proporciona:
 
 1. Un puntaje de salud general (healthScore) del 0 al 100
-2. Una evaluación del riesgo de alopecia (alopeciaRisk): "low", "medium", o "high"
+2. Una evaluación del riesgo de alopecia (alopeciaRisk) con porcentajes de probabilidad a 1 año, 3 años y 5 años. Cada porcentaje debe estar entre 0 y 100.
 3. Un resumen de métricas de salud general (generalHealthMetricsSummary) en formato de texto
 
 Por favor, responde en formato JSON con la siguiente estructura:
 {
   "healthScore": number,
-  "alopeciaRisk": "low" | "medium" | "high",
+  "alopeciaRisk": {
+    "oneYear": number,
+    "threeYears": number,
+    "fiveYears": number
+  },
   "generalHealthMetricsSummary": "string"
 }
 
@@ -128,7 +132,11 @@ Archivos a analizar: ${filesData.length} archivos (${filesData.filter((f) => f.t
             // Si no hay JSON, crear una respuesta por defecto
             analysisData = {
               healthScore: 75,
-              alopeciaRisk: "medium",
+              alopeciaRisk: {
+                oneYear: 15,
+                threeYears: 25,
+                fiveYears: 35,
+              },
               generalHealthMetricsSummary: generatedText,
             };
           }
@@ -136,7 +144,11 @@ Archivos a analizar: ${filesData.length} archivos (${filesData.filter((f) => f.t
           // Si falla el parseo, crear respuesta por defecto
           analysisData = {
             healthScore: 75,
-            alopeciaRisk: "medium",
+            alopeciaRisk: {
+              oneYear: 15,
+              threeYears: 25,
+              fiveYears: 35,
+            },
             generalHealthMetricsSummary: generatedText,
           };
         }
