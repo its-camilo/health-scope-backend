@@ -196,7 +196,7 @@ export default factories.createCoreController(
         try {
           console.log("Deleting file_data from media library, ID:", file.file_data.id);
           await strapi.plugins.upload.services.upload.remove({ id: file.file_data.id });
-          console.log("File_data deleted successfully");
+          console.log("File_data deleted successfully from media library");
         } catch (error) {
           console.error("Error deleting file_data:", error);
           // Continue anyway to delete the user-file record
@@ -205,12 +205,13 @@ export default factories.createCoreController(
         console.log("No file_data to delete");
       }
 
-      // Delete the user-file record
-      console.log("Deleting user-file record");
-      const response = await super.delete(ctx);
-      console.log("User-file deleted successfully");
+      // Delete the user-file record using entityService directly
+      console.log("Deleting user-file record with entityService");
+      await strapi.entityService.delete("api::user-file.user-file", id);
+      console.log("User-file record deleted successfully");
 
-      return response;
+      // Return 204 No Content
+      return ctx.send(null, 204);
     },
   })
 );
