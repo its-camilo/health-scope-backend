@@ -166,24 +166,50 @@ export default factories.createCoreController(
         return ctx.unauthorized("You must be authenticated");
       }
 
-      // Verificar que el archivo pertenece al usuario
+      console.log("=== USER FILE DELETE DEBUG ===");
+      console.log("Deleting user-file ID:", id);
+      console.log("Authenticated user ID:", user.id);
+
+      // Verificar que el archivo pertenece al usuario y obtener file_data
       const file = (await strapi.entityService.findOne(
         "api::user-file.user-file",
         id,
         {
-          populate: ["user"],
+          populate: ["user", "file_data"],
         }
-      )) as { user?: { id: number } } | null;
+      )) as { user?: { id: number }; file_data?: { id: number } } | null;
 
       if (!file) {
+        console.log("File not found");
         return ctx.notFound("File not found");
       }
 
       if (!file.user || file.user.id !== user.id) {
+        console.log("User does not own this file");
         return ctx.forbidden("You can only delete your own files");
       }
 
+      console.log("File data:", JSON.stringify(file, null, 2));
+
+      // Delete the physical file from media library FIRST
+      if (file.file_data && file.file_data.id) {
+        try {
+          console.log("Deleting file_data from media library, ID:", file.file_data.id);
+          await strapi.plugins.upload.services.upload.remove({ id: file.file_data.id });
+          console.log("File_data deleted successfully");
+        } catch (error) {
+          console.error("Error deleting file_data:", error);
+          // Continue anyway to delete the user-file record
+        }
+      } else {
+        console.log("No file_data to delete");
+      }
+
+      // Delete the user-file record
+      console.log("Deleting user-file record");
       const response = await super.delete(ctx);
+      console.log("User-file deleted successfully");
+
       return response;
     },
   })
