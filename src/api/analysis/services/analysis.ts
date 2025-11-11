@@ -1,6 +1,7 @@
 import { factories } from "@strapi/strapi";
 import fs from "fs";
 import FormData from "form-data";
+import axios from "axios";
 
 type PreparedFileData =
   | {
@@ -79,39 +80,27 @@ export default factories.createCoreService(
           contentType: "application/pdf",
         });
 
-        // Subir el archivo a Gemini File API
-        const uploadResponse = await fetch(
+        // Subir el archivo a Gemini File API usando axios
+        const uploadResponse = await axios.post(
           `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`,
+          formData,
           {
-            method: "POST",
             headers: {
               ...formData.getHeaders(),
             },
-            body: formData,
           }
         );
 
-        if (!uploadResponse.ok) {
-          const errorText = await uploadResponse.text();
-          throw new Error(
-            `Failed to upload PDF to Gemini: ${uploadResponse.status} - ${errorText}`
-          );
-        }
-
-        const uploadResult =
-          (await uploadResponse.json()) as GeminiFileUploadResponse;
+        const uploadResult = uploadResponse.data as GeminiFileUploadResponse;
 
         // Esperar a que el archivo esté procesado
         let file = uploadResult.file;
         while (file.state === "PROCESSING") {
           await new Promise((resolve) => setTimeout(resolve, 1000));
-          const statusResponse = await fetch(
+          const statusResponse = await axios.get(
             `https://generativelanguage.googleapis.com/v1beta/${file.name}?key=${apiKey}`
           );
-          if (statusResponse.ok) {
-            const statusResult = (await statusResponse.json()) as GeminiFileUploadResponse["file"];
-            file = statusResult;
-          }
+          file = statusResponse.data as GeminiFileUploadResponse["file"];
         }
 
         if (file.state === "FAILED") {
