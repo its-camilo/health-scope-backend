@@ -1,4 +1,6 @@
 import { factories } from "@strapi/strapi";
+import fs from "fs";
+import FormData from "form-data";
 
 type PreparedFileData =
   | {
@@ -22,6 +24,12 @@ type GeminiContentPart =
         mime_type?: string;
         data: string;
       };
+    }
+  | {
+      file_data: {
+        mime_type: string;
+        file_uri: string;
+      };
     };
 
 type GeminiContent = {
@@ -39,9 +47,84 @@ type GeminiGenerateContentResponse = {
   }>;
 };
 
+type GeminiFileUploadResponse = {
+  file: {
+    name: string;
+    displayName?: string;
+    mimeType: string;
+    sizeBytes: string;
+    createTime: string;
+    updateTime: string;
+    expirationTime: string;
+    sha256Hash: string;
+    uri: string;
+    state: string;
+  };
+};
+
 export default factories.createCoreService(
   "api::analysis-result.analysis-result",
   ({ strapi }) => ({
+    async uploadPdfToGemini(
+      filePath: string,
+      displayName: string,
+      apiKey: string
+    ): Promise<string> {
+      try {
+        // Crear FormData y agregar el archivo
+        const formData = new FormData();
+        const fileStream = fs.createReadStream(filePath);
+        formData.append("file", fileStream, {
+          filename: displayName,
+          contentType: "application/pdf",
+        });
+
+        // Subir el archivo a Gemini File API
+        const uploadResponse = await fetch(
+          `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${apiKey}`,
+          {
+            method: "POST",
+            headers: {
+              ...formData.getHeaders(),
+            },
+            body: formData,
+          }
+        );
+
+        if (!uploadResponse.ok) {
+          const errorText = await uploadResponse.text();
+          throw new Error(
+            `Failed to upload PDF to Gemini: ${uploadResponse.status} - ${errorText}`
+          );
+        }
+
+        const uploadResult =
+          (await uploadResponse.json()) as GeminiFileUploadResponse;
+
+        // Esperar a que el archivo esté procesado
+        let file = uploadResult.file;
+        while (file.state === "PROCESSING") {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          const statusResponse = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/${file.name}?key=${apiKey}`
+          );
+          if (statusResponse.ok) {
+            const statusResult = (await statusResponse.json()) as GeminiFileUploadResponse["file"];
+            file = statusResult;
+          }
+        }
+
+        if (file.state === "FAILED") {
+          throw new Error("PDF processing failed in Gemini");
+        }
+
+        return file.uri;
+      } catch (error) {
+        strapi.log.error("Error uploading PDF to Gemini:", error);
+        throw error;
+      }
+    },
+
     async runAnalysis(filesData: PreparedFileData[]) {
       try {
         // Verificar que tenemos la API key
@@ -79,7 +162,27 @@ Archivos a analizar: ${filesData.length} archivos (${filesData.filter((f) => f.t
           },
         ];
 
-        // Agregar imágenes
+        // Subir PDFs a Gemini File API y obtener URIs
+        const pdfUris: string[] = [];
+        for (const file of filesData) {
+          if (file.type === "pdf") {
+            try {
+              strapi.log.info(`Uploading PDF to Gemini: ${file.name}`);
+              const uri = await this.uploadPdfToGemini(
+                file.path,
+                file.name || "document.pdf",
+                apiKey
+              );
+              pdfUris.push(uri);
+              strapi.log.info(`PDF uploaded successfully: ${uri}`);
+            } catch (error) {
+              strapi.log.error(`Failed to upload PDF ${file.name}:`, error);
+              // Continuar con otros archivos aunque uno falle
+            }
+          }
+        }
+
+        // Agregar imágenes (inline_data)
         for (const file of filesData) {
           if (file.type === "image") {
             contents[0].parts.push({
@@ -89,6 +192,16 @@ Archivos a analizar: ${filesData.length} archivos (${filesData.filter((f) => f.t
               },
             });
           }
+        }
+
+        // Agregar PDFs (file_data)
+        for (const uri of pdfUris) {
+          contents[0].parts.push({
+            file_data: {
+              mime_type: "application/pdf",
+              file_uri: uri,
+            },
+          });
         }
 
         // Llamar a la API de Gemini
