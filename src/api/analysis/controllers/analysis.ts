@@ -55,11 +55,19 @@ export default factories.createCoreController(
     },
 
     async run(ctx) {
+      // Este endpoint ejecuta un análisis con los archivos ACTUALES del usuario
+      // y crea/actualiza el resultado de análisis de forma PERSISTENTE.
+      // El resultado permanecerá visible hasta que se ejecute un nuevo análisis o se reseteen los datos.
+
       const user = ctx.state.user;
 
       if (!user) {
         return ctx.unauthorized("You must be authenticated");
       }
+
+      console.log("=== ANALYSIS RUN - START ===");
+      console.log("User ID:", user.id);
+      console.log("Running new analysis with current user files");
 
       try {
         // 1. Obtener todos los archivos del usuario
@@ -174,12 +182,17 @@ export default factories.createCoreController(
         // Sanitize the output to match Strapi v5 REST API format
         const sanitizedResult = await this.sanitizeOutput(result, ctx);
 
+        console.log("Analysis result saved successfully");
+        console.log("Result ID:", result.id);
+        console.log("=== ANALYSIS RUN - END (SUCCESS) ===");
+
         return ctx.send({
           data: sanitizedResult,
           message: "Analysis completed successfully",
         });
       } catch (error) {
         strapi.log.error("Error running analysis:", error);
+        console.log("=== ANALYSIS RUN - END (ERROR) ===");
         return ctx.internalServerError(
           "Error running analysis: " + error.message
         );
