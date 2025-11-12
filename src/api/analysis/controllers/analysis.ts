@@ -1,6 +1,7 @@
 import { factories } from "@strapi/strapi";
 import fs from "fs";
 import path from "path";
+import os from "os";
 
 type PopulatedUploadFile = {
   id: number;
@@ -11,6 +12,21 @@ type PopulatedUploadFile = {
     mime?: string;
   } | null;
 };
+
+// Helper: Detecta si una URL es externa (http/https)
+function isExternalUrl(url: string): boolean {
+  return url.startsWith("http://") || url.startsWith("https://");
+}
+
+// Helper: Descarga un archivo desde una URL y retorna un buffer
+async function downloadFile(url: string): Promise<Buffer> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to download file from ${url}: ${response.statusText}`);
+  }
+  const arrayBuffer = await response.arrayBuffer();
+  return Buffer.from(arrayBuffer);
+}
 
 export default factories.createCoreController(
   "api::analysis-result.analysis-result",
@@ -102,44 +118,118 @@ export default factories.createCoreController(
             }
         > = [];
 
-        for (const file of userFiles) {
-          if (!file.file_data || !file.file_data.url) {
-            continue;
-          }
+        // Array para guardar archivos temporales y limpiarlos después
+        const tempFiles: string[] = [];
 
-          const filePath = path.join(
-            process.cwd(),
-            "public",
-            file.file_data.url
-          );
-
-          if (file.file_type === "photo") {
-            // Convertir imagen a base64
-            try {
-              const fileBuffer = fs.readFileSync(filePath);
-              const base64 = fileBuffer.toString("base64");
-              filesData.push({
-                type: "image",
-                name: file.file_name,
-                data: base64,
-                mimeType: file.file_data.mime,
-              });
-            } catch (error) {
-              strapi.log.error(`Error reading image file: ${error.message}`);
+        try {
+          for (const file of userFiles) {
+            if (!file.file_data || !file.file_data.url) {
+              continue;
             }
-          } else if (file.file_type === "pdf") {
-            // Para PDFs, almacenar la ruta para procesamiento posterior
-            filesData.push({
-              type: "pdf",
-              name: file.file_name,
-              path: filePath,
-            });
+
+            if (file.file_type === "photo") {
+              // Convertir imagen a base64
+              try {
+                let fileBuffer: Buffer;
+
+                if (isExternalUrl(file.file_data.url)) {
+                  // Descargar desde URL externa (Strapi Cloud)
+                  console.log(`Downloading image from external URL: ${file.file_data.url}`);
+                  fileBuffer = await downloadFile(file.file_data.url);
+                } else {
+                  // Leer desde sistema de archivos local
+                  const filePath = path.join(
+                    process.cwd(),
+                    "public",
+                    file.file_data.url
+                  );
+                  fileBuffer = fs.readFileSync(filePath);
+                }
+
+                const base64 = fileBuffer.toString("base64");
+                filesData.push({
+                  type: "image",
+                  name: file.file_name,
+                  data: base64,
+                  mimeType: file.file_data.mime,
+                });
+                console.log(`Image processed successfully: ${file.file_name}`);
+              } catch (error) {
+                strapi.log.error(`Error reading image file: ${error.message}`);
+              }
+            } else if (file.file_type === "pdf") {
+              // Para PDFs, necesitamos una ruta local para Gemini File API
+              try {
+                let filePath: string;
+
+                if (isExternalUrl(file.file_data.url)) {
+                  // Descargar desde URL externa a un archivo temporal
+                  console.log(`Downloading PDF from external URL: ${file.file_data.url}`);
+                  const fileBuffer = await downloadFile(file.file_data.url);
+
+                  // Crear archivo temporal
+                  const tempPath = path.join(
+                    os.tmpdir(),
+                    `pdf_${Date.now()}_${file.file_name || "document.pdf"}`
+                  );
+                  fs.writeFileSync(tempPath, fileBuffer);
+                  filePath = tempPath;
+                  tempFiles.push(tempPath);
+                  console.log(`PDF downloaded to temp file: ${tempPath}`);
+                } else {
+                  // Usar ruta local
+                  filePath = path.join(
+                    process.cwd(),
+                    "public",
+                    file.file_data.url
+                  );
+                }
+
+                filesData.push({
+                  type: "pdf",
+                  name: file.file_name,
+                  path: filePath,
+                });
+                console.log(`PDF processed successfully: ${file.file_name}`);
+              } catch (error) {
+                strapi.log.error(`Error processing PDF file: ${error.message}`);
+              }
+            }
           }
+        } catch (error) {
+          // Limpiar archivos temporales en caso de error
+          for (const tempFile of tempFiles) {
+            try {
+              if (fs.existsSync(tempFile)) {
+                fs.unlinkSync(tempFile);
+              }
+            } catch (cleanupError) {
+              strapi.log.error(`Error cleaning up temp file: ${cleanupError.message}`);
+            }
+          }
+          throw error;
         }
+
+        console.log(`Total files prepared for analysis: ${filesData.length}`);
 
         // 3. Llamar al servicio de análisis (Gemini)
         const analysisService = strapi.service("api::analysis.analysis");
-        const analysisData = await analysisService.runAnalysis(filesData);
+        let analysisData;
+        try {
+          analysisData = await analysisService.runAnalysis(filesData);
+        } finally {
+          // Limpiar archivos temporales después del análisis
+          for (const tempFile of tempFiles) {
+            try {
+              if (fs.existsSync(tempFile)) {
+                fs.unlinkSync(tempFile);
+                console.log(`Temp file cleaned up: ${tempFile}`);
+              }
+            } catch (cleanupError) {
+              strapi.log.error(`Error cleaning up temp file: ${cleanupError.message}`);
+            }
+          }
+        }
 
         // 4. Buscar si existe un resultado previo
         const existingResult = await strapi.entityService.findMany(
