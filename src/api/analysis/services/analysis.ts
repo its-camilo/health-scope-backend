@@ -124,11 +124,32 @@ export default factories.createCoreService(
         }
 
         // Preparar el prompt para Gemini
-        const prompt = `Eres un asistente médico especializado en análisis de salud. Analiza los siguientes archivos médicos (imágenes y/o PDFs) y proporciona:
+        const prompt = `Eres un asistente médico especializado en análisis de salud capilar y alopecia. Analiza los siguientes archivos médicos (fotografías del cuero cabelludo, imágenes de exámenes médicos y/o PDFs con resultados de laboratorio o reportes médicos) y proporciona un análisis ORIENTATIVO:
 
-1. Un puntaje de salud general (healthScore) del 0 al 100
-2. Una evaluación del riesgo de alopecia (alopeciaRisk) con porcentajes de probabilidad a 1 año, 3 años y 5 años. Cada porcentaje debe estar entre 0 y 100.
-3. Un resumen de métricas de salud general (generalHealthMetricsSummary) en formato de texto
+IMPORTANTE:
+- Este análisis es ORIENTATIVO e INFORMATIVO, no constituye un diagnóstico médico definitivo
+- Puedes realizar evaluaciones basadas en fotografías del cuero cabelludo, patrones de pérdida de cabello visibles, y documentos médicos proporcionados
+- Para un diagnóstico definitivo, el usuario debe consultar con un médico dermatólogo
+- Proporciona valores realistas basados en lo que observas en las imágenes y documentos
+
+Tu tarea es proporcionar:
+
+1. Un puntaje de salud general (healthScore) del 0 al 100 basado en:
+   - Análisis de fotografías del cuero cabelludo (densidad capilar, zonas de adelgazamiento)
+   - Resultados de exámenes de laboratorio si están disponibles
+   - Factores de riesgo visibles o mencionados en los documentos
+
+2. Una evaluación ORIENTATIVA del riesgo de alopecia (alopeciaRisk) con porcentajes de probabilidad a 1 año, 3 años y 5 años. Cada porcentaje debe estar entre 0 y 100. Considera:
+   - Patrón de pérdida de cabello visible en fotografías
+   - Tipo de alopecia (androgénica, areata, difusa, etc.)
+   - Factores hormonales, nutricionales o de salud en los reportes médicos
+   - Edad y género del paciente si es identificable
+
+3. Un resumen detallado de métricas de salud general (generalHealthMetricsSummary) que incluya:
+   - Descripción de lo observado en las fotografías del cuero cabelludo
+   - Resumen de hallazgos en exámenes médicos o reportes
+   - Factores de riesgo identificados
+   - Recomendaciones orientativas (siempre indicando que debe consultar a un médico)
 
 Por favor, responde en formato JSON con la siguiente estructura:
 {
@@ -138,7 +159,7 @@ Por favor, responde en formato JSON con la siguiente estructura:
     "threeYears": number,
     "fiveYears": number
   },
-  "generalHealthMetricsSummary": "string"
+  "generalHealthMetricsSummary": "string detallado que SIEMPRE inicie con: 'Análisis orientativo basado en la información proporcionada: ' seguido del análisis completo"
 }
 
 Archivos a analizar: ${filesData.length} archivos (${filesData.filter((f) => f.type === "image").length} imágenes, ${filesData.filter((f) => f.type === "pdf").length} PDFs)`;
