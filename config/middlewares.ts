@@ -39,7 +39,15 @@ module.exports = [
       // Lee la variable FRONTEND_URL de tu .env.
       // El .split(',') es una buena práctica que te permite añadir
       // múltiples URLs en el futuro, separadas por comas.
-      origin: (process.env.FRONTEND_URL || "http://localhost:3000").split(','),
+      origin: (ctx) => {
+  const origin = ctx.request.header.origin;
+  if (!origin) return '*';
+  if (typeof origin !== 'string') return false;
+  if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return origin;
+  if (origin.includes('.scf.usercontent.goog')) return origin;
+  if (origin.includes('localhost')) return origin;
+  return false;
+},
       // =================================================================
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       headers: ['Content-Type', 'Authorization'],
