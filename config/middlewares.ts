@@ -33,22 +33,9 @@ module.exports = [
     name: "strapi::cors",
     config: {
       enabled: true,
-      // =================================================================
-      // ESTA ES LA CONFIGURACIÓN CORREGIDA Y ROBUSTA
-      // =================================================================
-      // Lee la variable FRONTEND_URL de tu .env.
-      // El .split(',') es una buena práctica que te permite añadir
-      // múltiples URLs en el futuro, separadas por comas.
-      origin: (ctx) => {
-  const origin = ctx.request.header.origin;
-  if (!origin) return '*';
-  if (typeof origin !== 'string') return false;
-  if (process.env.FRONTEND_URL && origin === process.env.FRONTEND_URL) return origin;
-  if (origin.includes('.scf.usercontent.goog')) return origin;
-  if (origin.includes('localhost')) return origin;
-  return false;
-},
-      // =================================================================
+      // Configuración simplificada para Strapi Cloud
+      // Permite el frontend configurado en FRONTEND_URL
+      origin: process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : ['*'],
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
       headers: ['Content-Type', 'Authorization'],
       credentials: true,
